@@ -90,7 +90,7 @@
       font-size: 13px;
     }
 
-    /* HERO MULTI-VIDEO SECTION (6 VIDEOS) */
+    /* HERO 6-VIDEO SECTION */
     .hero-video-wrapper {
       max-width: 1200px;
       margin: 18px auto 10px;
@@ -192,6 +192,7 @@
       border-radius: 16px;
       overflow: hidden;
       position: relative;
+      cursor: pointer;
     }
     .main-image img {
       width: 100%;
@@ -211,7 +212,7 @@
     .thumb-row {
       margin-top: 14px;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 8px;
     }
     .thumb {
@@ -616,6 +617,9 @@
       .hero-video-grid {
         grid-template-columns: minmax(0, 1fr);
       }
+      .thumb-row {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
@@ -714,12 +718,12 @@
       <!-- LEFT: Gallery -->
       <div class="gallery">
         <div class="main-image" id="mainImageBox">
-          <!-- अपनी bracelet की main image का path लगाओ -->
           <img id="mainImage" src="images/bracelet1.jpg" alt="Braided Color Photo Bracelet" />
           <div class="badge">बेस्ट सेलर ⭐</div>
         </div>
+
         <div class="thumb-row">
-          <!-- नीचे वाली images के src अपने हिसाब से बदलो -->
+          <!-- 20 thumbnails -->
           <div class="thumb active" data-img="images/bracelet1.jpg">
             <img src="images/bracelet1.jpg" alt="Bracelet View 1">
           </div>
@@ -731,6 +735,54 @@
           </div>
           <div class="thumb" data-img="images/bracelet4.jpg">
             <img src="images/bracelet4.jpg" alt="Bracelet View 4">
+          </div>
+          <div class="thumb" data-img="images/bracelet5.jpg">
+            <img src="images/bracelet5.jpg" alt="Bracelet View 5">
+          </div>
+          <div class="thumb" data-img="images/bracelet6.jpg">
+            <img src="images/bracelet6.jpg" alt="Bracelet View 6">
+          </div>
+          <div class="thumb" data-img="images/bracelet7.jpg">
+            <img src="images/bracelet7.jpg" alt="Bracelet View 7">
+          </div>
+          <div class="thumb" data-img="images/bracelet8.jpg">
+            <img src="images/bracelet8.jpg" alt="Bracelet View 8">
+          </div>
+          <div class="thumb" data-img="images/bracelet9.jpg">
+            <img src="images/bracelet9.jpg" alt="Bracelet View 9">
+          </div>
+          <div class="thumb" data-img="images/bracelet10.jpg">
+            <img src="images/bracelet10.jpg" alt="Bracelet View 10">
+          </div>
+          <div class="thumb" data-img="images/bracelet11.jpg">
+            <img src="images/bracelet11.jpg" alt="Bracelet View 11">
+          </div>
+          <div class="thumb" data-img="images/bracelet12.jpg">
+            <img src="images/bracelet12.jpg" alt="Bracelet View 12">
+          </div>
+          <div class="thumb" data-img="images/bracelet13.jpg">
+            <img src="images/bracelet13.jpg" alt="Bracelet View 13">
+          </div>
+          <div class="thumb" data-img="images/bracelet14.jpg">
+            <img src="images/bracelet14.jpg" alt="Bracelet View 14">
+          </div>
+          <div class="thumb" data-img="images/bracelet15.jpg">
+            <img src="images/bracelet15.jpg" alt="Bracelet View 15">
+          </div>
+          <div class="thumb" data-img="images/bracelet16.jpg">
+            <img src="images/bracelet16.jpg" alt="Bracelet View 16">
+          </div>
+          <div class="thumb" data-img="images/bracelet17.jpg">
+            <img src="images/bracelet17.jpg" alt="Bracelet View 17">
+          </div>
+          <div class="thumb" data-img="images/bracelet18.jpg">
+            <img src="images/bracelet18.jpg" alt="Bracelet View 18">
+          </div>
+          <div class="thumb" data-img="images/bracelet19.jpg">
+            <img src="images/bracelet19.jpg" alt="Bracelet View 19">
+          </div>
+          <div class="thumb" data-img="images/bracelet20.jpg">
+            <img src="images/bracelet20.jpg" alt="Bracelet View 20">
           </div>
         </div>
       </div>
@@ -783,7 +835,6 @@
 
           <div class="section-label">अपनी फोटो अपलोड करें:</div>
           <div class="upload-input">
-            <!-- असली order के लिए backend चाहिए, अभी ये सिर्फ दिखाने के लिए है -->
             <input type="file" accept="image/*">
           </div>
           <p class="upload-hint">
@@ -837,7 +888,6 @@
             <textarea id="note" placeholder="साइज, सरप्राइज़ गिफ्ट का मैसेज आदि"></textarea>
           </div>
 
-          <!-- Hidden selected color field -->
           <input type="hidden" id="selectedColor" value="Black">
 
           <button type="button" class="btn-primary" id="goToPaymentBtn">
@@ -865,7 +915,6 @@
 
       <div class="qr-box">
         <div class="qr-img">
-          <!-- यहाँ अपनी असली QR इमेज लगाओ: qr.png को replace कर दो -->
           <!-- <img src="images/qr.png" alt="UPI QR Code"> -->
           <div>
             <strong>यहाँ अपनी QR इमेज लगाएँ</strong><br><br>
@@ -895,6 +944,7 @@
       <p class="section-sub">हमारे bracelets पर लोगों ने क्या कहा – कुछ रियल फीडबैक:</p>
 
       <div class="reviews-grid">
+        <!-- (reviews same as पहले वाले कोड में) -->
         <div class="review-card">
           <div class="review-name">साहिल पटेल</div>
           <div class="review-stars">★★★★★</div>
@@ -903,7 +953,6 @@
           </div>
           <div class="review-tag">Verified Purchase</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">आकांक्षा शर्मा</div>
           <div class="review-stars">★★★★★</div>
@@ -912,7 +961,6 @@
           </div>
           <div class="review-tag">Gift Order</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">मोहन सिंह</div>
           <div class="review-stars">★★★★☆</div>
@@ -921,7 +969,6 @@
           </div>
           <div class="review-tag">Couple Bracelet</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">निधि जैन</div>
           <div class="review-stars">★★★★★</div>
@@ -930,7 +977,6 @@
           </div>
           <div class="review-tag">Parents Gift</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">रोहित यादव</div>
           <div class="review-stars">★★★★★</div>
@@ -939,7 +985,6 @@
           </div>
           <div class="review-tag">Trendy Look</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">काजल चौधरी</div>
           <div class="review-stars">★★★★☆</div>
@@ -948,7 +993,6 @@
           </div>
           <div class="review-tag">Gift Box</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">इमरान खान</div>
           <div class="review-stars">★★★★★</div>
@@ -957,7 +1001,6 @@
           </div>
           <div class="review-tag">Couple Set</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">सुहानी मेहता</div>
           <div class="review-stars">★★★★★</div>
@@ -966,7 +1009,6 @@
           </div>
           <div class="review-tag">Photo Projection</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">अंकित वर्मा</div>
           <div class="review-stars">★★★★☆</div>
@@ -975,7 +1017,6 @@
           </div>
           <div class="review-tag">Daily Use</div>
         </div>
-
         <div class="review-card">
           <div class="review-name">तृषा दवे</div>
           <div class="review-stars">★★★★★</div>
@@ -1058,9 +1099,18 @@
     // Dynamic current year
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // Gallery thumbnails
+    // Gallery thumbnails + scroll to form
     const mainImage = document.getElementById("mainImage");
+    const mainImageBox = document.getElementById("mainImageBox");
     const thumbs = document.querySelectorAll(".thumb");
+
+    function scrollToForm() {
+      const form = document.getElementById("orderForm");
+      if (form) {
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
     thumbs.forEach(th => {
       th.addEventListener("click", () => {
         thumbs.forEach(t => t.classList.remove("active"));
@@ -1069,8 +1119,15 @@
         if (imgSrc) {
           mainImage.src = imgSrc;
         }
+        scrollToForm();
       });
     });
+
+    if (mainImageBox) {
+      mainImageBox.addEventListener("click", () => {
+        scrollToForm();
+      });
+    }
 
     // Color selection
     const colorRow = document.getElementById("colorRow");
@@ -1147,7 +1204,6 @@
           "Note: " + (data.note || "-") + "%0A%0A" +
           "Payment: Half payment QR से की है / करूँगा, स्क्रीनशॉट साथ में भेज रहा हूँ।";
 
-        // यहाँ अपना WhatsApp नंबर (country code के साथ) fix करो:
         const whatsappNumber = "916376662787"; // 91 + 10 digit
 
         const url = "https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(decodeURIComponent(message));
