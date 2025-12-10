@@ -17,7 +17,9 @@
     .btn-primary{background:linear-gradient(135deg,#ec4899,#f97316);color:#fff}
     .note{color:#6b7280;font-size:13px;margin-top:10px}
     .preview{display:flex;gap:12px;align-items:center;margin-top:12px}
-    .preview img{max-width:160px;border-radius:10px;border:1px solid #e5e7eb}
+    .preview img{max-width:160px;border-radius:10px;border:1px solid #e5e7eb;max-height:140px;object-fit:cover}
+    .preview .no-img {width:160px;height:140px;border-radius:10px;border:1px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;background:#fff;color:#9ca3af;font-size:13px;padding:8px;text-align:center}
+    @media (max-width:480px){ .preview{flex-direction:row} .preview img{max-width:120px;max-height:120px} .preview .no-img{width:120px;height:120px} }
   </style>
 </head>
 <body>
@@ -28,10 +30,12 @@
     <div class="preview" id="imgPreview" style="display:none">
       <img id="previewImg" src="" alt="Preview">
       <div class="note" id="imgLabel"></div>
+      <!-- If image fails, we'll hide the <img> and show this .no-img element via JS -->
+      <div id="imgFallback" class="no-img" style="display:none">Preview unavailable<br> (image couldn't be loaded)</div>
     </div>
 
     <!-- Order form (same fields as main page) -->
-    <form id="orderForm">
+    <form id="orderForm" onsubmit="return false;">
       <label>पूरा नाम*</label>
       <input id="name" required placeholder="जैसे — रोहन सोलंकी" />
 
@@ -91,24 +95,64 @@
   </div>
 
 <script>
+  // Helper: safe decode (params may already be decoded)
+  function safeDecode(s){
+    try { return s ? decodeURIComponent(s) : ''; }
+    catch(e){ return s || ''; }
+  }
+
   // read query params
   const params = new URLSearchParams(location.search);
-  const product = params.get('product') || 'Direct / Not selected';
-  const img = params.get('img') || '';
+  const product = params.get('product') ? safeDecode(params.get('product')) : 'Direct / Not selected';
+  const img = params.get('img') ? safeDecode(params.get('img')) : '';
 
   // show source and preview
   document.getElementById('sourceShow').textContent = 'Source: ' + product;
+
+  const preview = document.getElementById('imgPreview');
+  const previewImg = document.getElementById('previewImg');
+  const imgLabel = document.getElementById('imgLabel');
+  const imgFallback = document.getElementById('imgFallback');
+
   if (img) {
-    const preview = document.getElementById('imgPreview');
-    const previewImg = document.getElementById('previewImg');
-    const imgLabel = document.getElementById('imgLabel');
-    previewImg.src = img;
+    // if img is relative (doesn't start with http(s) or data:), try to convert relative -> absolute using document.baseURI
+    let finalImg = img;
+    try {
+      // new URL will throw if img is relative but we can resolve it against document.baseURI
+      finalImg = new URL(img, document.baseURI).href;
+    } catch(e) {
+      finalImg = img; // fallback
+    }
+
+    // set preview src
+    previewImg.src = finalImg;
+    previewImg.alt = product;
     imgLabel.textContent = product;
     preview.style.display = 'flex';
-    // set hidden clickedSource
-    document.getElementById('clickedSource').value = product + (img ? ' | ' + img : '');
+    imgFallback.style.display = 'none';
+    previewImg.style.display = '';
+
+    // on error show fallback box and keep clickedSource for debug
+    previewImg.addEventListener('error', function () {
+      previewImg.style.display = 'none';
+      imgFallback.style.display = 'flex';
+      imgLabel.textContent = product + ' (image failed to load)';
+    }, { once: true });
+
+    // on load succeed ensure fallback hidden
+    previewImg.addEventListener('load', function () {
+      imgFallback.style.display = 'none';
+      previewImg.style.display = '';
+      imgLabel.textContent = product;
+    }, { once: true });
+
+    // set hidden clickedSource (with the resolved final url)
+    document.getElementById('clickedSource').value = product + (finalImg ? ' | ' + finalImg : '');
   } else {
+    // no image param
     document.getElementById('clickedSource').value = product;
+    // keep preview hidden
+    preview.style.display = 'none';
   }
 
   function getFormData() {
@@ -146,7 +190,7 @@
   document.getElementById('sendWA').addEventListener('click', () => {
     if (!validate()) return;
     const f = getFormData();
-    const message = [
+    const lines = [
       "*New Bracelet Order*",
       "Name: " + f.name,
       "Phone: " + f.phone,
@@ -157,11 +201,14 @@
       "Note: " + (f.note || "-"),
       "Clicked From: " + f.clickedFrom,
       "Payment: QR UPI – Paid (attach screenshot)"
-    ].join("%0A");
-    const whatsappNumber = "916376662787";
-    window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(decodeURIComponent(message)), "_blank");
+    ];
+    const message = lines.join("\n");
+
+    const whatsappNumber = "916376662787"; // should be in international form (91...)
+    // encode message properly
+    const url = "https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(message);
+    window.open(url, "_blank");
   });
 </script>
 </body>
 </html>
-
