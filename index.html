@@ -1038,8 +1038,9 @@
         product: sourceLabel || '',
         img: imageUrl || ''
       }).toString();
-      // navigate to order.html in same tab
-      window.location.href = "order.html?" + params;
+      // open order.html in a NEW TAB (no scroll on current page)
+    window.open("order.html?" + params, "_blank");
+
     }
 
     // REPLACE thumbnail click handlers -> open order page
@@ -1172,3 +1173,4 @@
   </script>
 </body>
 </html>
+
