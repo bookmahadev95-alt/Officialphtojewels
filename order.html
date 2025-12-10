@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order — YourBracelet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body{font-family:Poppins, sans-serif;background:#f6f7fb;color:#111;margin:0;padding:20px;}
+    .card{max-width:900px;margin:18px auto;background:#fff;border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(15,23,42,0.06)}
+    h2{margin-bottom:8px}
+    label{display:block;margin-top:10px;color:#4b5563;font-size:13px}
+    input,textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #d1d5db;background:#fbfbfd;font-size:14px}
+    .row{display:flex;gap:10px}
+    .col{flex:1}
+    .btn{display:inline-block;padding:10px 14px;border-radius:999px;border:none;cursor:pointer}
+    .btn-primary{background:linear-gradient(135deg,#ec4899,#f97316);color:#fff}
+    .note{color:#6b7280;font-size:13px;margin-top:10px}
+    .preview{display:flex;gap:12px;align-items:center;margin-top:12px}
+    .preview img{max-width:160px;border-radius:10px;border:1px solid #e5e7eb}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Order Form — YourBracelet</h2>
+    <div id="sourceShow" class="note">Source: —</div>
+
+    <div class="preview" id="imgPreview" style="display:none">
+      <img id="previewImg" src="" alt="Preview">
+      <div class="note" id="imgLabel"></div>
+    </div>
+
+    <!-- Order form (same fields as main page) -->
+    <form id="orderForm">
+      <label>पूरा नाम*</label>
+      <input id="name" required placeholder="जैसे — रोहन सोलंकी" />
+
+      <label>मोबाइल नंबर (WhatsApp)*</label>
+      <input id="phone" required placeholder="10 digit" maxlength="10" />
+
+      <div class="row">
+        <div class="col">
+          <label>शहर*</label>
+          <input id="city" required />
+        </div>
+        <div class="col">
+          <label>स्टेट*</label>
+          <input id="state" required />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>पिनकोड*</label>
+          <input id="pincode" required maxlength="6" />
+        </div>
+        <div class="col">
+          <label>क्वांटिटी*</label>
+          <input id="quantity" type="number" value="1" min="1" />
+        </div>
+      </div>
+
+      <label>पूरा पता*</label>
+      <textarea id="address" required></textarea>
+
+      <label>Extra Note (optional)</label>
+      <textarea id="note"></textarea>
+
+      <!-- Hidden field to store clicked source -->
+      <input type="hidden" id="clickedSource" name="clickedSource" value="Direct / Not selected">
+
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="button" id="payBtn" class="btn btn-primary">1️⃣ Proceed to Payment (QR नीचे)</button>
+        <button type="button" id="sendWA" class="btn" style="border:1px solid #ec4899;color:#ec4899">2️⃣ I Paid — Send WhatsApp</button>
+      </div>
+
+      <p class="note">नोट: नीचे QR स्कैन करके Booking Charges (₹500) भेजें और स्क्रीनशॉट सेव रखें।</p>
+
+      <div style="margin-top:12px">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="width:180px;border-radius:12px;border:2px dashed #ec4899;padding:8px;text-align:center;background:#fff">
+            <img src="qr.jpg" alt="QR" style="max-width:100%">
+          </div>
+          <div class="note">
+            <strong>UPI ID:</strong> yourupi@bank<br>
+            <strong>Amount:</strong> ₹500 (Booking)
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+<script>
+  // read query params
+  const params = new URLSearchParams(location.search);
+  const product = params.get('product') || 'Direct / Not selected';
+  const img = params.get('img') || '';
+
+  // show source and preview
+  document.getElementById('sourceShow').textContent = 'Source: ' + product;
+  if (img) {
+    const preview = document.getElementById('imgPreview');
+    const previewImg = document.getElementById('previewImg');
+    const imgLabel = document.getElementById('imgLabel');
+    previewImg.src = img;
+    imgLabel.textContent = product;
+    preview.style.display = 'flex';
+    // set hidden clickedSource
+    document.getElementById('clickedSource').value = product + (img ? ' | ' + img : '');
+  } else {
+    document.getElementById('clickedSource').value = product;
+  }
+
+  function getFormData() {
+    return {
+      name: document.getElementById('name').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      city: document.getElementById('city').value.trim(),
+      state: document.getElementById('state').value.trim(),
+      pincode: document.getElementById('pincode').value.trim(),
+      quantity: document.getElementById('quantity').value,
+      address: document.getElementById('address').value.trim(),
+      note: document.getElementById('note').value.trim(),
+      clickedFrom: document.getElementById('clickedSource').value
+    };
+  }
+
+  function validate() {
+    const f = getFormData();
+    if (!f.name || !f.phone || !f.city || !f.state || !f.pincode || !f.address) {
+      alert('कृपया सभी required फील्ड्स भरें।'); return false;
+    }
+    if (f.phone.length !== 10) { alert('कृपया 10 digit फोन नंबर डालें।'); return false; }
+    if (f.pincode.length !== 6) { alert('6 digit पिनकोड भरें।'); return false; }
+    return true;
+  }
+
+  // open payment section (scroll behavior is not needed since new page)
+  document.getElementById('payBtn').addEventListener('click', () => {
+    if (!validate()) return;
+    // scroll to QR box (simple)
+    window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+  });
+
+  // Send WhatsApp with details (user will attach screenshot manually)
+  document.getElementById('sendWA').addEventListener('click', () => {
+    if (!validate()) return;
+    const f = getFormData();
+    const message = [
+      "*New Bracelet Order*",
+      "Name: " + f.name,
+      "Phone: " + f.phone,
+      "City/State: " + f.city + " / " + f.state,
+      "Pincode: " + f.pincode,
+      "Qty: " + f.quantity,
+      "Address: " + f.address,
+      "Note: " + (f.note || "-"),
+      "Clicked From: " + f.clickedFrom,
+      "Payment: QR UPI – Paid (attach screenshot)"
+    ].join("%0A");
+    const whatsappNumber = "916376662787"; // replace with 91XXXXXXXXXX
+    window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(decodeURIComponent(message)), "_blank");
+  });
+</script>
+</body>
+</html>
