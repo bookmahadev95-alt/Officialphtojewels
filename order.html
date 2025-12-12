@@ -18,7 +18,8 @@
     .note{color:#6b7280;font-size:13px;margin-top:10px}
     .preview{display:flex;gap:12px;align-items:center;margin-top:12px}
     .preview img{max-width:160px;border-radius:10px;border:1px solid #e5e7eb;object-fit:cover;height:120px}
-    .preview .placeholder{width:160px;height:120px;border-radius:10px;border:1px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;color:#9ca3af;background:#fff}
+    .preview .placeholder{width:160px;height:120px;border-radius:10px;border:1px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;color:#9ca3af;background:#fff;text-align:center;padding:8px}
+    .preview .open-video{display:block;margin-top:6px;font-size:13px;color:#ec4899;text-decoration:underline;cursor:pointer}
     .small-muted{font-size:12px;color:#6b7280}
   </style>
 </head>
@@ -29,7 +30,10 @@
 
     <div class="preview" id="imgPreview" style="display:none">
       <img id="previewImg" src="" alt="Preview">
-      <div class="note" id="imgLabel"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="note" id="imgLabel"></div>
+        <a id="openVideoLink" class="open-video" style="display:none" target="_blank" rel="noopener">Open video</a>
+      </div>
     </div>
 
     <!-- Order form (same fields as main page) -->
@@ -96,102 +100,117 @@
   // read query params
   const params = new URLSearchParams(location.search);
   const product = params.get('product') || 'Direct / Not selected';
-  const imgParam = params.get('img') || '';
+  const imgParamRaw = params.get('img') || '';
 
-  // add a visible file input for gallery upload
-  // we'll insert it dynamically at top of form, above name field
+  // Elements
+  const previewContainer = document.getElementById('imgPreview');
+  const previewImg = document.getElementById('previewImg');
+  const imgLabel = document.getElementById('imgLabel');
+  const openVideoLink = document.getElementById('openVideoLink');
+  const clickedSourceInput = document.getElementById('clickedSource');
+
+  // add a visible file input for gallery upload at top (above form fields)
   (function addFileInput() {
     const form = document.getElementById('orderForm');
     const wrapper = document.createElement('div');
     wrapper.style.marginTop = '12px';
-
-    // label + file input + helper text
     wrapper.innerHTML = `
       <label>अपनी फोटो अपलोड करें (गैलरी चुनें):</label>
-      <input id="fileInput" type="file" accept="image/*" style="padding:10px;background:#fff;border-radius:8px" />
-      <div class="small-muted">क्लियर फोटो चुनें। फोटो चुनते ही यहाँ प्रीव्यू दिखाई देगा।</div>
+      <input id="fileInput" type="file" accept="image/*" style="padding:8px;background:#fff;border-radius:8px" />
+      <div class="small-muted">क्लियर फोटो चुनें। फोटो चुनते ही यहाँ प्रीव्यू दिखाई देगा। (WhatsApp पर फ़ाइल मैन्युअल attach करें)</div>
     `;
-    // insert at the top of form
     form.insertBefore(wrapper, form.firstChild);
-
-    // hook events after DOM ready
     initFileHandlers();
   })();
 
-  // preview elements
-  const previewContainer = document.getElementById('imgPreview');
-  const previewImg = document.getElementById('previewImg');
-  const imgLabel = document.getElementById('imgLabel');
-  const clickedSourceInput = document.getElementById('clickedSource');
-
-  function showPreviewFromURL(url, labelText) {
-    if (!url) return;
-    previewImg.src = url;
-    previewImg.onload = () => {
-      previewContainer.style.display = 'flex';
-      imgLabel.textContent = labelText || 'Selected Photo';
-    };
-    previewImg.onerror = () => {
-      // if remote URL fails, still show placeholder text
-      previewContainer.style.display = 'flex';
-      previewImg.style.display = 'none';
-      imgLabel.textContent = (labelText || 'Selected Photo') + ' (image failed to load)';
-    };
-    // set clickedSource (store the URL)
-    clickedSourceInput.value = (labelText || '') + (url ? ' | ' + url : '');
-    // ensure previewImg visible (in case previous error hid it)
-    previewImg.style.display = '';
+  // helper: detect video URL by extension or mp4 string
+  function isVideoUrl(url) {
+    if (!url) return false;
+    try {
+      const u = url.split('?')[0].toLowerCase();
+      return /\.(mp4|webm|ogg)$/i.test(u) || u.includes('.mp4') || u.includes('.webm');
+    } catch (e) {
+      return false;
+    }
   }
 
+  // show preview from a remote URL (image) or show video placeholder/open link if video
+  function showPreviewFromURL(url, labelText) {
+    if (!url) return;
+    // normalize
+    let finalUrl = url;
+    try { finalUrl = decodeURIComponent(url); } catch (e) { finalUrl = url; }
+
+    if (isVideoUrl(finalUrl)) {
+      // video -> show placeholder and open-video link
+      previewImg.style.display = 'none';
+      previewContainer.style.display = 'flex';
+      imgLabel.textContent = (labelText || 'Video') + ' (video)';
+      openVideoLink.style.display = 'inline-block';
+      openVideoLink.href = finalUrl;
+      openVideoLink.textContent = 'Open video';
+      clickedSourceInput.value = (labelText || 'Video') + ' | ' + finalUrl;
+    } else {
+      // image -> set src, hide openVideoLink
+      openVideoLink.style.display = 'none';
+      previewImg.style.display = '';
+      previewImg.src = finalUrl;
+      previewImg.onload = () => {
+        previewContainer.style.display = 'flex';
+        imgLabel.textContent = labelText || 'Selected Photo';
+      };
+      previewImg.onerror = () => {
+        // if image fails, show placeholder text
+        previewImg.style.display = 'none';
+        previewContainer.style.display = 'flex';
+        imgLabel.textContent = (labelText || 'Selected Photo') + ' (image failed to load)';
+        openVideoLink.style.display = 'none';
+      };
+      clickedSourceInput.value = (labelText || '') + ' | ' + finalUrl;
+    }
+  }
+
+  // initialize file input & click-to-open picker
   function initFileHandlers() {
     const fileInput = document.getElementById('fileInput');
 
-    // if query param img present, show it as preview
-    if (imgParam) {
-      showPreviewFromURL(imgParam, product);
-      // also set clickedSource so order knows
-      clickedSourceInput.value = product + ' | ' + imgParam;
+    // if query param img present, show as preview
+    if (imgParamRaw) {
+      showPreviewFromURL(imgParamRaw, product);
     }
+
+    // click preview container opens file picker
+    previewContainer.addEventListener('click', () => {
+      if (fileInput) fileInput.click();
+    });
 
     // when user picks file from gallery
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
-      // only images allowed; validate basic size/type if needed
       if (!file.type.startsWith('image/')) {
-        alert('कृपया केवल इमेज फ़ाइल चुनें।'); 
+        alert('कृपया केवल इमेज फ़ाइल चुनें।');
         fileInput.value = '';
         return;
       }
-      // create object URL for fast preview
+      // objectURL preview
       const objectUrl = URL.createObjectURL(file);
+      openVideoLink.style.display = 'none';
+      previewImg.style.display = '';
       previewImg.src = objectUrl;
       previewImg.onload = () => {
         previewContainer.style.display = 'flex';
         imgLabel.textContent = file.name || 'Selected Photo';
-        // store filename in clickedSource (we can't send actual file over wa.me)
         clickedSourceInput.value = 'Uploaded from gallery | ' + (file.name || 'selected-image');
-        // revoke objectURL later to free memory
+        // revoke later
         setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
       };
       previewImg.onerror = () => {
-        previewContainer.style.display = 'flex';
         previewImg.style.display = 'none';
+        previewContainer.style.display = 'flex';
         imgLabel.textContent = (file.name || 'Selected Photo') + ' (preview failed)';
       };
     });
-
-    // also allow clicking preview area to open file picker
-    previewContainer.addEventListener('click', () => {
-      const fileInputEl = document.getElementById('fileInput');
-      if (fileInputEl) fileInputEl.click();
-    });
-
-    // If preview area not visible yet, show placeholder clickable box under sourceShow
-    const sourceShow = document.getElementById('sourceShow');
-    if (!previewContainer.innerHTML.trim()) {
-      // nothing - but we already created preview img element; ensure container is available
-    }
   }
 
   // show source text
@@ -221,35 +240,44 @@
     return true;
   }
 
-  // open payment section (scroll behavior is not needed since new page)
-  document.getElementById('payBtn').addEventListener('click', () => {
+  // pay button scroll
+  const payBtn = document.getElementById('payBtn');
+  payBtn.addEventListener('click', () => {
     if (!validate()) return;
-    // scroll to bottom where QR would be
     window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
   });
 
-  // Send WhatsApp with details (user will attach screenshot/manual photo)
-  document.getElementById('sendWA').addEventListener('click', () => {
+  // WhatsApp button — app fallback then web
+  const whatsappBtn = document.getElementById('sendWA');
+  whatsappBtn.addEventListener('click', () => {
     if (!validate()) return;
     const f = getFormData();
-    // include clickedFrom which may contain uploaded filename or source URL
-    const message = [
-      "*New Bracelet Order*",
-      "Name: " + f.name,
-      "Phone: " + f.phone,
-      "City/State: " + f.city + " / " + f.state,
-      "Pincode: " + f.pincode,
-      "Qty: " + f.quantity,
-      "Address: " + f.address,
-      "Note: " + (f.note || "-"),
-      "Clicked From / Photo Source: " + (f.clickedFrom || "Direct"),
-      "",
-      "Payment: Booking Charges ₹500 (QR से भेजा / भेजूँगा). मैं स्क्रीनशॉट यहाँ attach कर रहा/करूँगा."
-    ].join("%0A");
+    const message =
+      "*New Bracelet Order*\n\n" +
+      "Name: " + f.name + "\n" +
+      "Phone: " + f.phone + "\n" +
+      "City/State: " + f.city + " / " + f.state + "\n" +
+      "Pincode: " + f.pincode + "\n" +
+      "Qty: " + f.quantity + "\n" +
+      "Address: " + f.address + "\n" +
+      "Note: " + (f.note || "-") + "\n" +
+      "Clicked From / Photo Source: " + (f.clickedFrom || "Direct") + "\n\n" +
+      "Payment: Booking Charges ₹500 (QR से भेजा / भेजूँगा). स्क्रीनशॉट attach करके भेज रहा/करूँगा.";
 
-    const whatsappNumber = "916376662787";
-    const url = "https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(decodeURIComponent(message));
-    window.open(url, "_blank");
+    const encoded = encodeURIComponent(message);
+    const whatsappNumber = "916376662787"; // use 91XXXXXXXXXX
+    const appUrl = "whatsapp://send?phone=" + whatsappNumber + "&text=" + encoded;
+    const webUrl = "https://api.whatsapp.com/send?phone=" + whatsappNumber + "&text=" + encoded;
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      // try app first, then fallback to web after short timeout
+      window.location.href = appUrl;
+      setTimeout(() => { window.location.href = webUrl; }, 1200);
+    } else {
+      // desktop -> open web in new tab
+      window.open(webUrl, "_blank");
+    }
   });
 </script>
 </body>
