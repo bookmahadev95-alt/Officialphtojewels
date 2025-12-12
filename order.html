@@ -17,9 +17,9 @@
     .btn-primary{background:linear-gradient(135deg,#ec4899,#f97316);color:#fff}
     .note{color:#6b7280;font-size:13px;margin-top:10px}
     .preview{display:flex;gap:12px;align-items:center;margin-top:12px}
-    .preview img{max-width:160px;border-radius:10px;border:1px solid #e5e7eb;max-height:140px;object-fit:cover}
-    .preview .no-img {width:160px;height:140px;border-radius:10px;border:1px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;background:#fff;color:#9ca3af;font-size:13px;padding:8px;text-align:center}
-    @media (max-width:480px){ .preview{flex-direction:row} .preview img{max-width:120px;max-height:120px} .preview .no-img{width:120px;height:120px} }
+    .preview img{max-width:160px;border-radius:10px;border:1px solid #e5e7eb;object-fit:cover;height:120px}
+    .preview .placeholder{width:160px;height:120px;border-radius:10px;border:1px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;color:#9ca3af;background:#fff}
+    .small-muted{font-size:12px;color:#6b7280}
   </style>
 </head>
 <body>
@@ -30,12 +30,10 @@
     <div class="preview" id="imgPreview" style="display:none">
       <img id="previewImg" src="" alt="Preview">
       <div class="note" id="imgLabel"></div>
-      <!-- If image fails, we'll hide the <img> and show this .no-img element via JS -->
-      <div id="imgFallback" class="no-img" style="display:none">Preview unavailable<br> (image couldn't be loaded)</div>
     </div>
 
     <!-- Order form (same fields as main page) -->
-    <form id="orderForm" onsubmit="return false;">
+    <form id="orderForm">
       <label>पूरा नाम*</label>
       <input id="name" required placeholder="जैसे — रोहन सोलंकी" />
 
@@ -95,65 +93,109 @@
   </div>
 
 <script>
-  // Helper: safe decode (params may already be decoded)
-  function safeDecode(s){
-    try { return s ? decodeURIComponent(s) : ''; }
-    catch(e){ return s || ''; }
-  }
-
   // read query params
   const params = new URLSearchParams(location.search);
-  const product = params.get('product') ? safeDecode(params.get('product')) : 'Direct / Not selected';
-  const img = params.get('img') ? safeDecode(params.get('img')) : '';
+  const product = params.get('product') || 'Direct / Not selected';
+  const imgParam = params.get('img') || '';
 
-  // show source and preview
-  document.getElementById('sourceShow').textContent = 'Source: ' + product;
+  // add a visible file input for gallery upload
+  // we'll insert it dynamically at top of form, above name field
+  (function addFileInput() {
+    const form = document.getElementById('orderForm');
+    const wrapper = document.createElement('div');
+    wrapper.style.marginTop = '12px';
 
-  const preview = document.getElementById('imgPreview');
+    // label + file input + helper text
+    wrapper.innerHTML = `
+      <label>अपनी फोटो अपलोड करें (गैलरी चुनें):</label>
+      <input id="fileInput" type="file" accept="image/*" style="padding:10px;background:#fff;border-radius:8px" />
+      <div class="small-muted">क्लियर फोटो चुनें। फोटो चुनते ही यहाँ प्रीव्यू दिखाई देगा।</div>
+    `;
+    // insert at the top of form
+    form.insertBefore(wrapper, form.firstChild);
+
+    // hook events after DOM ready
+    initFileHandlers();
+  })();
+
+  // preview elements
+  const previewContainer = document.getElementById('imgPreview');
   const previewImg = document.getElementById('previewImg');
   const imgLabel = document.getElementById('imgLabel');
-  const imgFallback = document.getElementById('imgFallback');
+  const clickedSourceInput = document.getElementById('clickedSource');
 
-  if (img) {
-    // if img is relative (doesn't start with http(s) or data:), try to convert relative -> absolute using document.baseURI
-    let finalImg = img;
-    try {
-      // new URL will throw if img is relative but we can resolve it against document.baseURI
-      finalImg = new URL(img, document.baseURI).href;
-    } catch(e) {
-      finalImg = img; // fallback
+  function showPreviewFromURL(url, labelText) {
+    if (!url) return;
+    previewImg.src = url;
+    previewImg.onload = () => {
+      previewContainer.style.display = 'flex';
+      imgLabel.textContent = labelText || 'Selected Photo';
+    };
+    previewImg.onerror = () => {
+      // if remote URL fails, still show placeholder text
+      previewContainer.style.display = 'flex';
+      previewImg.style.display = 'none';
+      imgLabel.textContent = (labelText || 'Selected Photo') + ' (image failed to load)';
+    };
+    // set clickedSource (store the URL)
+    clickedSourceInput.value = (labelText || '') + (url ? ' | ' + url : '');
+    // ensure previewImg visible (in case previous error hid it)
+    previewImg.style.display = '';
+  }
+
+  function initFileHandlers() {
+    const fileInput = document.getElementById('fileInput');
+
+    // if query param img present, show it as preview
+    if (imgParam) {
+      showPreviewFromURL(imgParam, product);
+      // also set clickedSource so order knows
+      clickedSourceInput.value = product + ' | ' + imgParam;
     }
 
-    // set preview src
-    previewImg.src = finalImg;
-    previewImg.alt = product;
-    imgLabel.textContent = product;
-    preview.style.display = 'flex';
-    imgFallback.style.display = 'none';
-    previewImg.style.display = '';
+    // when user picks file from gallery
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      // only images allowed; validate basic size/type if needed
+      if (!file.type.startsWith('image/')) {
+        alert('कृपया केवल इमेज फ़ाइल चुनें।'); 
+        fileInput.value = '';
+        return;
+      }
+      // create object URL for fast preview
+      const objectUrl = URL.createObjectURL(file);
+      previewImg.src = objectUrl;
+      previewImg.onload = () => {
+        previewContainer.style.display = 'flex';
+        imgLabel.textContent = file.name || 'Selected Photo';
+        // store filename in clickedSource (we can't send actual file over wa.me)
+        clickedSourceInput.value = 'Uploaded from gallery | ' + (file.name || 'selected-image');
+        // revoke objectURL later to free memory
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+      };
+      previewImg.onerror = () => {
+        previewContainer.style.display = 'flex';
+        previewImg.style.display = 'none';
+        imgLabel.textContent = (file.name || 'Selected Photo') + ' (preview failed)';
+      };
+    });
 
-    // on error show fallback box and keep clickedSource for debug
-    previewImg.addEventListener('error', function () {
-      previewImg.style.display = 'none';
-      imgFallback.style.display = 'flex';
-      imgLabel.textContent = product + ' (image failed to load)';
-    }, { once: true });
+    // also allow clicking preview area to open file picker
+    previewContainer.addEventListener('click', () => {
+      const fileInputEl = document.getElementById('fileInput');
+      if (fileInputEl) fileInputEl.click();
+    });
 
-    // on load succeed ensure fallback hidden
-    previewImg.addEventListener('load', function () {
-      imgFallback.style.display = 'none';
-      previewImg.style.display = '';
-      imgLabel.textContent = product;
-    }, { once: true });
-
-    // set hidden clickedSource (with the resolved final url)
-    document.getElementById('clickedSource').value = product + (finalImg ? ' | ' + finalImg : '');
-  } else {
-    // no image param
-    document.getElementById('clickedSource').value = product;
-    // keep preview hidden
-    preview.style.display = 'none';
+    // If preview area not visible yet, show placeholder clickable box under sourceShow
+    const sourceShow = document.getElementById('sourceShow');
+    if (!previewContainer.innerHTML.trim()) {
+      // nothing - but we already created preview img element; ensure container is available
+    }
   }
+
+  // show source text
+  document.getElementById('sourceShow').textContent = 'Source: ' + product;
 
   function getFormData() {
     return {
@@ -182,15 +224,16 @@
   // open payment section (scroll behavior is not needed since new page)
   document.getElementById('payBtn').addEventListener('click', () => {
     if (!validate()) return;
-    // scroll to QR box (simple)
+    // scroll to bottom where QR would be
     window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
   });
 
-  // Send WhatsApp with details (user will attach screenshot manually)
+  // Send WhatsApp with details (user will attach screenshot/manual photo)
   document.getElementById('sendWA').addEventListener('click', () => {
     if (!validate()) return;
     const f = getFormData();
-    const lines = [
+    // include clickedFrom which may contain uploaded filename or source URL
+    const message = [
       "*New Bracelet Order*",
       "Name: " + f.name,
       "Phone: " + f.phone,
@@ -199,14 +242,13 @@
       "Qty: " + f.quantity,
       "Address: " + f.address,
       "Note: " + (f.note || "-"),
-      "Clicked From: " + f.clickedFrom,
-      "Payment: QR UPI – Paid (attach screenshot)"
-    ];
-    const message = lines.join("\n");
+      "Clicked From / Photo Source: " + (f.clickedFrom || "Direct"),
+      "",
+      "Payment: Booking Charges ₹500 (QR से भेजा / भेजूँगा). मैं स्क्रीनशॉट यहाँ attach कर रहा/करूँगा."
+    ].join("%0A");
 
-    const whatsappNumber = "916376662787"; // should be in international form (91...)
-    // encode message properly
-    const url = "https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(message);
+    const whatsappNumber = "916376662787";
+    const url = "https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(decodeURIComponent(message));
     window.open(url, "_blank");
   });
 </script>
