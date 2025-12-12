@@ -6,6 +6,7 @@
   <title>Order — YourBracelet</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
+    *{box-sizing:border-box}
     body{font-family:Poppins, sans-serif;background:#f6f7fb;color:#111;margin:0;padding:20px;}
     .card{max-width:900px;margin:18px auto;background:#fff;border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(15,23,42,0.06)}
     h2{margin-bottom:8px}
@@ -21,6 +22,44 @@
     .preview .placeholder{width:160px;height:120px;border-radius:10px;border:1px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;color:#9ca3af;background:#fff;text-align:center;padding:8px}
     .preview .open-video{display:block;margin-top:6px;font-size:13px;color:#ec4899;text-decoration:underline;cursor:pointer}
     .small-muted{font-size:12px;color:#6b7280}
+
+    /* QR BOX styling copied from product page */
+    .section { margin-top: 30px; }
+    .section h2 { font-size: 20px; margin-bottom: 6px; }
+    .section-sub { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+    .qr-box {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      align-items: center;
+      margin-top: 12px;
+    }
+    .qr-img {
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px dashed #ec4899;
+      background: #fdf2f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #be185d;
+      text-align: center;
+      padding: 16px;
+    }
+    .qr-img img { width: 100%; display:block; }
+    .qr-steps { font-size: 13px; line-height: 1.6; }
+    .qr-steps ol { padding-left: 18px; margin-top: 6px; }
+    .qr-steps strong { display:block; margin-bottom:6px; }
+    @media (max-width:800px) {
+      .qr-box { grid-template-columns: minmax(0,1fr); }
+      .row{flex-direction:column}
+    }
   </style>
 </head>
 <body>
@@ -36,8 +75,10 @@
       </div>
     </div>
 
-    <!-- Order form (same fields as main page) -->
+    <!-- Order form -->
     <form id="orderForm">
+      <!-- File input inserted dynamically by script (gallery upload) -->
+
       <label>पूरा नाम*</label>
       <input id="name" required placeholder="जैसे — रोहन सोलंकी" />
 
@@ -82,17 +123,37 @@
 
       <p class="note">नोट: नीचे QR स्कैन करके Booking Charges (₹500) भेजें और स्क्रीनशॉट सेव रखें।</p>
 
-      <div style="margin-top:12px">
-        <div style="display:flex;gap:12px;align-items:center">
-          <div style="width:180px;border-radius:12px;border:2px dashed #ec4899;padding:8px;text-align:center;background:#fff">
-            <img src="qr.jpg" alt="QR" style="max-width:100%">
+      <!-- ===== QR BOX START (product-pg जैसा) ===== -->
+      <section id="paymentSection" class="section">
+        <h2>पेमेंट & QR स्कैनर</h2>
+        <p class="section-sub">
+          नीचे दिया गया QR स्कैन करके आप <strong>पहली Booking Charges ₹500</strong> कर सकते हैं। पेमेंट के बाद स्क्रीनशॉट सेव करें
+          और ऊपर वाले बटन से WhatsApp पर भेजें।
+        </p>
+
+        <div class="qr-box">
+          <div class="qr-img">
+            <!-- यहाँ अपनी स्कैनर/QR image लगाओ -->
+            <img src="qr.jpg" alt="UPI QR Code">
           </div>
-          <div class="note">
-            <strong>UPI ID:</strong> yourupi@bank<br>
-            <strong>Amount:</strong> ₹500 (Booking)
+
+          <div class="qr-steps">
+            <strong>पेमेंट कैसे करें?</strong>
+            <ol>
+              <li>ऊपर फॉर्म में अपनी सारी डिटेल ठीक से भरें।</li>
+              <li>UPI ऐप (PhonePe / GPay / Paytm आदि) खोलें।</li>
+              <li>QR स्कैन करें और <strong>Booking Charges ₹500</strong> भेजें।</li>
+              <li>ट्रांजैक्शन का स्क्रीनशॉट ले लें।</li>
+              <li>ऊपर “I Paid — Send WhatsApp” बटन दबाकर स्क्रीनशॉट + details भेजें।</li>
+            </ol>
+            <p class="small-muted" style="margin-top:8px;">
+              आपका ऑर्डर कन्फर्म होने के बाद 1–2 दिन में फोटो के साथ प्रोडक्ट तैयार होगा और 4–8 वर्किंग डेज में आपके पते पर डिलीवर कर दिया जाएगा।
+            </p>
           </div>
         </div>
-      </div>
+      </section>
+      <!-- ===== QR BOX END ===== -->
+
     </form>
   </div>
 
@@ -108,8 +169,9 @@
   const imgLabel = document.getElementById('imgLabel');
   const openVideoLink = document.getElementById('openVideoLink');
   const clickedSourceInput = document.getElementById('clickedSource');
+  const paymentSection = document.getElementById('paymentSection');
 
-  // add a visible file input for gallery upload at top (above form fields)
+  // insert file input for gallery at top of form
   (function addFileInput() {
     const form = document.getElementById('orderForm');
     const wrapper = document.createElement('div');
@@ -123,26 +185,20 @@
     initFileHandlers();
   })();
 
-  // helper: detect video URL by extension or mp4 string
   function isVideoUrl(url) {
     if (!url) return false;
     try {
       const u = url.split('?')[0].toLowerCase();
       return /\.(mp4|webm|ogg)$/i.test(u) || u.includes('.mp4') || u.includes('.webm');
-    } catch (e) {
-      return false;
-    }
+    } catch (e) { return false; }
   }
 
-  // show preview from a remote URL (image) or show video placeholder/open link if video
   function showPreviewFromURL(url, labelText) {
     if (!url) return;
-    // normalize
     let finalUrl = url;
     try { finalUrl = decodeURIComponent(url); } catch (e) { finalUrl = url; }
 
     if (isVideoUrl(finalUrl)) {
-      // video -> show placeholder and open-video link
       previewImg.style.display = 'none';
       previewContainer.style.display = 'flex';
       imgLabel.textContent = (labelText || 'Video') + ' (video)';
@@ -151,7 +207,6 @@
       openVideoLink.textContent = 'Open video';
       clickedSourceInput.value = (labelText || 'Video') + ' | ' + finalUrl;
     } else {
-      // image -> set src, hide openVideoLink
       openVideoLink.style.display = 'none';
       previewImg.style.display = '';
       previewImg.src = finalUrl;
@@ -160,7 +215,6 @@
         imgLabel.textContent = labelText || 'Selected Photo';
       };
       previewImg.onerror = () => {
-        // if image fails, show placeholder text
         previewImg.style.display = 'none';
         previewContainer.style.display = 'flex';
         imgLabel.textContent = (labelText || 'Selected Photo') + ' (image failed to load)';
@@ -170,21 +224,17 @@
     }
   }
 
-  // initialize file input & click-to-open picker
   function initFileHandlers() {
     const fileInput = document.getElementById('fileInput');
 
-    // if query param img present, show as preview
     if (imgParamRaw) {
       showPreviewFromURL(imgParamRaw, product);
     }
 
-    // click preview container opens file picker
     previewContainer.addEventListener('click', () => {
       if (fileInput) fileInput.click();
     });
 
-    // when user picks file from gallery
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
@@ -193,7 +243,6 @@
         fileInput.value = '';
         return;
       }
-      // objectURL preview
       const objectUrl = URL.createObjectURL(file);
       openVideoLink.style.display = 'none';
       previewImg.style.display = '';
@@ -202,7 +251,6 @@
         previewContainer.style.display = 'flex';
         imgLabel.textContent = file.name || 'Selected Photo';
         clickedSourceInput.value = 'Uploaded from gallery | ' + (file.name || 'selected-image');
-        // revoke later
         setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
       };
       previewImg.onerror = () => {
@@ -240,11 +288,12 @@
     return true;
   }
 
-  // pay button scroll
+  // pay scroll
   const payBtn = document.getElementById('payBtn');
   payBtn.addEventListener('click', () => {
     if (!validate()) return;
-    window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+    // scroll to QR box
+    paymentSection.scrollIntoView({behavior:'smooth', block:'start'});
   });
 
   // WhatsApp button — app fallback then web
@@ -265,17 +314,15 @@
       "Payment: Booking Charges ₹500 (QR से भेजा / भेजूँगा). स्क्रीनशॉट attach करके भेज रहा/करूँगा.";
 
     const encoded = encodeURIComponent(message);
-    const whatsappNumber = "916376662787"; // use 91XXXXXXXXXX
+    const whatsappNumber = "916376662787"; // 91 + number
     const appUrl = "whatsapp://send?phone=" + whatsappNumber + "&text=" + encoded;
     const webUrl = "https://api.whatsapp.com/send?phone=" + whatsappNumber + "&text=" + encoded;
 
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
-      // try app first, then fallback to web after short timeout
       window.location.href = appUrl;
       setTimeout(() => { window.location.href = webUrl; }, 1200);
     } else {
-      // desktop -> open web in new tab
       window.open(webUrl, "_blank");
     }
   });
